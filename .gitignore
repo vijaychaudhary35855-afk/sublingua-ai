@@ -1,0 +1,4 @@
+node_modules/
+sublingua-ai.zip
+*.log
+.DS_Store

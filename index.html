@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SubLingua AI — Roman Gen-Z Hinglish Subtitle Studio & Translator</title>
+  <meta name="description" content="AI-powered subtitle translator and editor converting video and subtitle files into authentic Roman-script Gen-Z Hinglish using Google Gemini API with locked timestamps and zero desync.">
+  
+  <!-- Monetag Ad Network Verification -->
+  <meta name="monetag" content="f59c4952521ca3a1e5b841d4c52b73cf">
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Sticky Real-Time Progress Bar -->
+  <aside id="stickyProgressWrap" class="top-sticky-progress-wrap is-hidden" aria-label="Translation progress bar">
+    <div class="progress-inner">
+      <div class="progress-info">
+        <div class="progress-pulse"></div>
+        <div class="progress-text-block">
+          <div class="progress-title" id="progressTitle">
+            Translating to Roman Gen-Z Hinglish
+            <span class="progress-percentage-pill" id="progressPercentagePill">0%</span>
+          </div>
+          <div class="progress-subtitle" id="progressSubtitle">Initializing Gemini batch pipeline...</div>
+        </div>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+      <div class="progress-actions">
+        <button id="btnPauseResume" class="btn-icon-sm" title="Pause / Resume">Pause</button>
+        <button id="btnStopSubbing" class="btn-icon-sm" title="Stop translation">Stop</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Application Wrapper -->
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="site-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <path d="M8 9h8"/>
+            <path d="M8 13h5"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <h1>SubLingua AI <span class="badge-tag">GEN-Z HINGLISH STUDIO</span></h1>
+          <p class="brand-subtitle">Zero-Desync Subtitle Localizer & Live Editor powered by Google Gemini</p>
+        </div>
+      </div>
+
+      <div class="header-right-actions">
+        <button id="btnOpenApiGuide" class="sample-loader-btn" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.35);color:#6ee7b7;font-weight:600;" title="Free Google Gemini API Key kaise banayein">
+          🔑 Free API Setup Guide
+        </button>
+        <button id="btnLoadSample" class="sample-loader-btn" title="Load 15 sample movie dialogues">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Demo (15 Cues)
+        </button>
+        <button id="btnLoad100Sample" class="sample-loader-btn" style="background:rgba(99,102,241,0.2);border-color:rgba(99,102,241,0.4);color:#a5b4fc;font-weight:600;" title="Load 100 cues to test 100 lines at once">
+          ⚡ Load 100 Lines (Ek Sath)
+        </button>
+      </div>
+    </header>
+
+    <!-- Section 1: Mandatory API Key Validation & Dynamic Model Selection -->
+    <section class="api-config-card" aria-labelledby="apiConfigTitle">
+      <div class="api-card-header">
+        <div class="card-title-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <h2 id="apiConfigTitle">Google Gemini API Authentication & Dynamic Model Engine</h2>
+        </div>
+        <span id="keyStatusBadge" class="status-badge unverified">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f43f5e;"></span>
+          Unverified
+        </span>
+      </div>
+
+      <div class="api-form-grid">
+        <!-- API Key Field -->
+        <div class="field-group">
+          <label class="field-label" for="apiKeyInput">
+            <span>Google Gemini API Key</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get free key at Google AI Studio &rarr;</a>
+          </label>
+          <div class="input-with-button">
+            <input 
+              type="password" 
+              id="apiKeyInput" 
+              placeholder="Paste your AIzaSy... API key here" 
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button type="button" id="toggleKeyVisibilityBtn" class="toggle-visibility-btn" title="Show / Hide Key">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Model Selector -->
+        <div class="field-group">
+          <label class="field-label" for="modelSelect">
+            <span>Dynamic Gemini Model</span>
+          </label>
+          <select id="modelSelect" disabled>
+            <option value="">Verify API Key first...</option>
+          </select>
+        </div>
+
+        <!-- Verify Button -->
+        <div class="field-group">
+          <label class="field-label">&nbsp;</label>
+          <button id="btnVerifyKey" class="btn btn-primary" title="Test & Verify key via live API call">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Test & Verify Key
+          </button>
+        </div>
+      </div>
+
+      <div id="apiFeedback" class="api-verify-feedback error">
+        Translation and processing controls are disabled until the Gemini API key is tested and verified.
+      </div>
+    </section>
+
+    <!-- Section 2: Ingestion Zone (Standalone Subtitles & Video Gallery Container Inspector) -->
+    <section class="ingestion-grid">
+      <!-- Subtitle Files & Drag Drop -->
+      <div class="card">
+        <div class="card-title-bar">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Upload Subtitle or Video File
+          </h3>
+          <span style="font-size:12px;color:var(--text-muted);">SRT, VTT, MP4, MKV, WebM</span>
+        </div>
+
+        <div class="drop-zone" id="subtitleDropZone">
+          <input type="file" id="subtitleFileInput" accept=".srt,.vtt,.mp4,.mkv,.webm" title="Choose file">
+          <div class="drop-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <h4>Drag & Drop your Subtitles or Video file</h4>
+          <p>Or click to browse from your computer</p>
+          <div class="drop-badges">
+            <span class="format-pill">.SRT</span>
+            <span class="format-pill">.VTT</span>
+            <span class="format-pill">.MP4</span>
+            <span class="format-pill">.MKV</span>
+            <span class="format-pill">.WEBM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Gallery & Container Inspector -->
+      <div class="card">
+        <div class="card-title-bar">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+              <polygon points="23 7 16 12 23 17 23 7"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            </svg>
+            Video Stream & Container Inspector
+          </h3>
+          <label for="videoFileInput" class="btn btn-outline" style="padding:4px 10px;font-size:11.5px;cursor:pointer;">
+            Select Video
+          </label>
+          <input type="file" id="videoFileInput" accept=".mp4,.mkv,.webm" style="display:none;">
+        </div>
+
+        <div class="video-preview-wrapper">
+          <div class="video-container" id="videoPreviewContainer">
+            <video id="videoElement" controls style="display:none;"></video>
+            <div class="video-placeholder-state" id="videoPlaceholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                <line x1="7" y1="2" x2="7" y2="22"/>
+                <line x1="17" y1="2" x2="17" y2="22"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <line x1="2" y1="7" x2="7" y2="7"/>
+                <line x1="2" y1="17" x2="7" y2="17"/>
+                <line x1="17" y1="17" x2="22" y2="17"/>
+                <line x1="17" y1="7" x2="22" y2="7"/>
+              </svg>
+              <span>No video loaded</span>
+              <span style="font-size:11.5px;color:var(--text-faint);">Upload an MP4/MKV to inspect embedded subtitle streams & preview playback</span>
+            </div>
+          </div>
+
+          <!-- Track Selector Bar (shown when tracks found) -->
+          <div class="track-selector-bar" id="trackSelectorBar" style="display:none;">
+            <div class="track-row">
+              <span class="track-label">Embedded Subtitle Stream:</span>
+              <select id="videoTrackSelect" style="flex:1;">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <!-- No Tracks Prompt (shown when video uploaded without embedded sub tracks) -->
+          <div class="no-tracks-alert" id="noTracksAlert" style="display:none;">
+            <span>No embedded subtitle stream found in this video container.</span>
+            <button type="button" id="btnUploadSrtFallback">Upload Separate .SRT</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Translation Control Suite & Vibe Engine -->
+    <section class="controls-strip">
+      <div class="controls-left-group">
+        <div class="control-item">
+          <label for="vibeSelect">Hinglish Vibe:</label>
+          <select id="vibeSelect" class="select-sm" disabled>
+            <option value="chill">Casual Chill Hinglish (Natural & Relatable)</option>
+            <option value="savage">Full Gen-Z Savage (Peak Slang & Witty)</option>
+            <option value="cinematic">Cinematic Drama Hinglish (Impactful & Expressive)</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label for="batchSizeSelect">Batch Size:</label>
+          <select id="batchSizeSelect" class="select-sm" disabled>
+            <option value="100" selected>⚡ 100 Lines / Batch (Ek Sath - Max Turbo)</option>
+            <option value="50">50 Lines / Batch (Fast)</option>
+            <option value="25">25 Lines / Batch (Standard)</option>
+            <option value="10">10 Lines / Batch (Careful)</option>
+          </select>
+        </div>
+
+        <div class="stats-pills">
+          <div class="stat-pill">
+            <span>Total Cues:</span>
+            <strong id="statTotalCues">0</strong>
+          </div>
+          <div class="stat-pill">
+            <span>Translated:</span>
+            <strong id="statTranslatedCues">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnStartSubbing" class="btn btn-primary start-subbing-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Start Subbing
+      </button>
+    </section>
+
+    <!-- Section 4: Synchronized Dual Real-Time Workspace -->
+    <main class="workspace-wrapper">
+      <header class="workspace-header">
+        <div class="workspace-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            type="text" 
+            id="workspaceSearch" 
+            class="workspace-search-input" 
+            placeholder="Search dialogue text or timing..."
+          >
+        </div>
+
+        <div class="workspace-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="pending">Pending</button>
+          <button class="filter-btn" data-filter="translating">Translating</button>
+          <button class="filter-btn" data-filter="translated">Translated</button>
+          <button class="filter-btn" data-filter="edited">Edited</button>
+        </div>
+      </header>
+
+      <!-- Two-column synchronized layout -->
+      <div class="workspace-dual-columns">
+        <div class="dual-col-header-sticky source-col-header">
+          <span>Source Subtitle (Zero-Desync Timestamps) <strong id="sourceColHeaderCount">(0 cues)</strong></span>
+          <span style="font-size:11px;color:var(--text-faint);">Locked Sync</span>
+        </div>
+        <div class="dual-col-header-sticky target-col-header">
+          <span>Target Roman Gen-Z Hinglish <strong id="targetColHeaderCount">(0 cues)</strong></span>
+          <span style="font-size:11px;color:var(--accent-cyan);">Click any cell to edit</span>
+        </div>
+
+        <!-- Cue List -->
+        <div id="dualWorkspaceGrid" style="display:contents;">
+          <div class="workspace-empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <h3>Workspace Ready</h3>
+            <p>Upload a .srt/.vtt file or click "Load Demo Cues" to start translating.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Section 5: Export & Download Suite -->
+    <section class="export-card">
+      <div class="export-grid">
+        <!-- Filename Input -->
+        <div class="field-group">
+          <label class="field-label" for="filenameInput">Custom Export Filename:</label>
+          <div class="filename-input-wrap">
+            <input 
+              type="text" 
+              id="filenameInput" 
+              value="sublingua_hinglish_cues" 
+              placeholder="e.g. my_anime_ep1_hinglish"
+              disabled
+            >
+            <span class="filename-ext-pill" id="exportFormatExt">.srt</span>
+          </div>
+        </div>
+
+        <!-- Format Selector -->
+        <div class="field-group">
+          <label class="field-label" for="exportFormatSelect">Subtitle Format Enforcement:</label>
+          <select id="exportFormatSelect" disabled>
+            <option value="srt">SubRip (.SRT) - UTF-8 Standard</option>
+            <option value="vtt">WebVTT (.VTT) - UTF-8 Standard</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="export-actions-group">
+          <button id="btnDownload" class="btn btn-primary" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download Subtitles (.SRT)
+          </button>
+
+          <button id="btnCopyClipboard" class="btn btn-outline" disabled title="Copy full subtitle content to clipboard">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy All
+          </button>
+
+          <button id="btnResetWorkspace" class="btn btn-outline btn-danger" title="Clear cues and reset workspace">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"/>
+              <polyline points="23 20 23 14 17 14"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Reset / New File
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-left">
+        <span>SubLingua AI Studio</span>
+        <span>•</span>
+        <span class="vibe-tag">Pure Roman Gen-Z Hinglish Localization</span>
+      </div>
+      <div>
+        <span>Client-Side Processing • Strict Zero Video Desync • 100% Free & Open</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- API Setup Guide Onboarding Modal (Shows automatically on first visit if not verified) -->
+  <div id="apiSetupGuideOverlay" class="api-guide-overlay" role="dialog" aria-modal="true" aria-labelledby="guideModalTitle">
+    <div class="api-guide-modal">
+      <button type="button" id="btnCloseApiGuide" class="api-guide-close-btn" title="Close Guide">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="api-guide-header">
+        <div class="guide-badge-pill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          100% Free • No Credit Card Required
+        </div>
+        <h2 id="guideModalTitle">Google Gemini API Key Setup Guide ⚡</h2>
+        <p>SubLingua AI ko use karne ke liye aapko Google Gemini ka ek <strong>Official FREE API Key</strong> chahiye. Ye bilkul free hai aur 1 minute me mil jata hai:</p>
+      </div>
+
+      <div class="guide-steps-grid">
+        <!-- Step 1 -->
+        <div class="guide-step-card">
+          <div class="step-number-circle">1</div>
+          <div class="step-content-box">
+            <h4>
+              Google AI Studio Kholein
+              <span style="font-size:11px;color:#10b981;font-weight:700;">STEP 1</span>
+            </h4>
+            <p>Neeche diye gaye blue button par click karein aur apne kisi bhi regular Google/Gmail account se login karein (koi card ya payment nahi lagega):</p>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="guide-external-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Get Free Gemini API Key (aistudio.google.com) ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="guide-step-card">
+          <div class="step-number-circle">2</div>
+          <div class="step-content-box">
+            <h4>
+              "Create API Key" Button Dabayein
+              <span style="font-size:11px;color:#10b981;font-weight:700;">STEP 2</span>
+            </h4>
+            <p>Wahan blue color ka <strong>"Create API key"</strong> button dikhega. Us par click karein aur <strong>"Create API key in new project"</strong> select karein. 1 second me aapki key generate ho jayegi.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="guide-step-card">
+          <div class="step-number-circle">3</div>
+          <div class="step-content-box">
+            <h4>
+              Key Copy Karke Yahan Paste Karein
+              <span style="font-size:11px;color:#10b981;font-weight:700;">STEP 3</span>
+            </h4>
+            <p>Key copy karein (ye <code>AIzaSy...</code> se shuru hoti hai) aur neeche diye gaye box me paste karke <strong>Verify</strong> par click karein:</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Inline Paste & Verify Box -->
+      <div class="guide-inline-verify-box">
+        <label for="modalApiKeyInput">Apna Gemini API Key Yahan Paste Karein:</label>
+        <div class="guide-input-row">
+          <input 
+            type="password" 
+            id="modalApiKeyInput" 
+            placeholder="AIzaSy... yahan paste karein"
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="button" id="btnModalVerifyKey" class="btn btn-primary" style="padding:10px 20px;">
+            Verify & Unlock App
+          </button>
+        </div>
+        <div id="modalApiFeedback" style="font-size:12px;color:#fda4af;display:none;"></div>
+      </div>
+
+      <div class="guide-footer-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>Ek baar setup hone ke baad ye notice dubara kabhi nahi aayega!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main ES Module Script -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
